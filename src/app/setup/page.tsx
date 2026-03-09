@@ -65,7 +65,7 @@ export default function SetupPage() {
           component={motion.div}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          sx={{ backgroundColor: "white", borderRadius: 4, p: 3, mb: 3, boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}
+          sx={{ backgroundColor: "white", borderRadius: 2, p: 3, mb: 3, boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}
         >
           <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
             เพิ่มผู้เล่น ({players.length}/5)
@@ -86,9 +86,9 @@ export default function SetupPage() {
                   onClick={() => !isUsed && setSelectedChar(char.id)}
                   sx={{
                     position: "relative",
-                    width: 68,
-                    height: 92,
-                    borderRadius: 3,
+                    width: 100,
+                    height: 100,
+                    borderRadius: 2,
                     overflow: "visible",
                     cursor: isUsed ? "not-allowed" : "pointer",
                     border: `3px solid ${isSelected ? char.baseColor : "transparent"}`,
@@ -100,7 +100,7 @@ export default function SetupPage() {
                     transition: "all 0.2s",
                   }}
                 >
-                  <Image src={char.image} alt={char.name} width={62} height={80} style={{ objectFit: "contain" }} />
+                  <Image src={char.image} alt={char.name} width={70} height={80} style={{ objectFit: "contain" }} />
                   <Typography variant="caption" fontWeight={600} sx={{ color: char.baseColor, mt: 0.25, fontSize: "0.65rem" }}>
                     {char.name}
                   </Typography>

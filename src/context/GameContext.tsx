@@ -13,11 +13,11 @@ export interface CharacterDef {
 }
 
 export const CHARACTERS: CharacterDef[] = [
-  { id: "grandpa", name: "คุณตา", image: "/characters/grandpa.png", baseColor: "#7A9E7E" },
-  { id: "grandma", name: "คุณยาย", image: "/characters/grandma.png", baseColor: "#E8A030" },
-  { id: "daughter", name: "ลูกสาว", image: "/characters/daughter.png", baseColor: "#D4607A" },
-  { id: "mom", name: "แม่", image: "/characters/mom.png", baseColor: "#5BB8A8" },
-  { id: "dad", name: "พ่อ", image: "/characters/dad.png", baseColor: "#4A7AAE" },
+  { id: "grandpa", name: "A", image: "/characters/grandpa.png", baseColor: "#7A9E7E" },
+  { id: "grandma", name: "B", image: "/characters/grandma.png", baseColor: "#E8A030" },
+  { id: "daughter", name: "C", image: "/characters/daughter.png", baseColor: "#D4607A" },
+  { id: "mom", name: "D", image: "/characters/mom.png", baseColor: "#5BB8A8" },
+  { id: "dad", name: "E", image: "/characters/dad.png", baseColor: "#4A7AAE" },
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────

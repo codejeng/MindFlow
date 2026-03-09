@@ -157,6 +157,7 @@ export default function Home() {
           </Typography>
         </Box>
 
+
         {/* Tagline */}
         <Box
           component={motion.div}
