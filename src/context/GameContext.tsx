@@ -41,6 +41,7 @@ export interface Player {
   stats: {
     questionsAnswered: number;
     traitPoints: TraitPoints;
+    passTokens: number;
   };
 }
 
@@ -49,6 +50,7 @@ export interface QuestionResult {
   playerId: string;
   selectedAnswerIndex: number | null; // null = skipped/timeout
   traitPointsEarned: Partial<Record<Trait, number>>;
+  usedPassToken?: boolean;
 }
 
 export type GamePhase = "setup" | "ordering" | "playing" | "finished";
@@ -60,6 +62,8 @@ interface GameState {
   gamePhase: GamePhase;
   questionHistory: QuestionResult[];
   totalTraitPoints: TraitPoints; // aggregate across all players
+  timeLimit: number; // in minutes (45, 60, 90)
+  gameStartTime: number | null; // Date.now() timestamp
 }
 
 interface GameContextType extends GameState {
@@ -69,6 +73,9 @@ interface GameContextType extends GameState {
   setTurnOrder: (order: string[]) => void;
   randomizeTurnOrder: () => void;
   setGamePhase: (phase: GamePhase) => void;
+  setTimeLimit: (minutes: number) => void;
+  setGameStartTime: (time: number) => void;
+  usePassToken: (playerId: string) => void;
   nextTurn: () => void;
   prevTurn: () => void;
   getCurrentPlayer: () => Player | null;
@@ -113,6 +120,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     gamePhase: "setup",
     questionHistory: [],
     totalTraitPoints: emptyTraits(),
+    timeLimit: 60,
+    gameStartTime: null,
   });
 
   const addPlayer = useCallback((name: string, role: PlayerRole, characterId: string) => {
@@ -124,7 +133,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         name,
         role,
         characterId: char.id,
-        stats: { questionsAnswered: 0, traitPoints: emptyTraits() },
+        stats: { questionsAnswered: 0, traitPoints: emptyTraits(), passTokens: 2 },
       };
       return { ...prev, players: [...prev.players, newPlayer] };
     });
@@ -161,6 +170,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, gamePhase: phase }));
   }, []);
 
+  const setTimeLimit = useCallback((minutes: number) => {
+    setState((prev) => ({ ...prev, timeLimit: minutes }));
+  }, []);
+
+  const setGameStartTime = useCallback((time: number) => {
+    setState((prev) => ({ ...prev, gameStartTime: time }));
+  }, []);
+
+  const usePassToken = useCallback((playerId: string) => {
+    setState((prev) => ({
+      ...prev,
+      players: prev.players.map((p) =>
+        p.id === playerId && p.stats.passTokens > 0
+          ? { ...p, stats: { ...p.stats, passTokens: p.stats.passTokens - 1 } }
+          : p
+      ),
+    }));
+  }, []);
+
   const nextTurn = useCallback(() => {
     setState((prev) => ({
       ...prev,
@@ -190,6 +218,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ? {
               ...p,
               stats: {
+                ...p.stats,
                 questionsAnswered: p.stats.questionsAnswered + 1,
                 traitPoints: addTraits(p.stats.traitPoints, result.traitPointsEarned as Partial<TraitPoints>),
               },
@@ -207,14 +236,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState({
       players: [], turnOrder: [], currentTurnIndex: 0,
       gamePhase: "setup", questionHistory: [], totalTraitPoints: emptyTraits(),
+      timeLimit: 60, gameStartTime: null,
     });
   }, []);
 
   return (
     <GameContext.Provider value={{
       ...state, addPlayer, removePlayer, updatePlayer, setTurnOrder,
-      randomizeTurnOrder, setGamePhase, nextTurn, prevTurn,
-      getCurrentPlayer, recordAnswer, finishGame, resetGame,
+      randomizeTurnOrder, setGamePhase, setTimeLimit, setGameStartTime, usePassToken,
+      nextTurn, prevTurn, getCurrentPlayer, recordAnswer, finishGame, resetGame,
     }}>
       {children}
     </GameContext.Provider>

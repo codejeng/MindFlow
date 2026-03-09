@@ -12,6 +12,7 @@ import { useGame, CHARACTERS } from "@/context/GameContext";
 import { getQuestionByCode } from "@/data/questions";
 import type { Question } from "@/data/questions";
 import CountdownTimer from "@/components/common/CountdownTimer";
+import GlobalTimer from "@/components/common/GlobalTimer";
 import QuestionCard from "@/components/common/QuestionCard";
 import PageTransition from "@/components/common/PageTransition";
 import StopCircleRoundedIcon from "@mui/icons-material/StopCircleRounded";
@@ -20,14 +21,17 @@ import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import UndoRoundedIcon from "@mui/icons-material/UndoRounded";
 import PersonIcon from "@mui/icons-material/Person";
 import ChildCareIcon from "@mui/icons-material/ChildCare";
+import VpnKeyRoundedIcon from "@mui/icons-material/VpnKeyRounded";
+import RecordVoiceOverRoundedIcon from "@mui/icons-material/RecordVoiceOverRounded";
 
-type PlayState = "turn" | "input" | "question" | "result";
+type PlayState = "turn" | "input" | "question" | "result" | "share";
 
 export default function PlayPage() {
   const router = useRouter();
   const {
     players, turnOrder, currentTurnIndex,
     nextTurn, prevTurn, getCurrentPlayer, recordAnswer, finishGame,
+    usePassToken,
   } = useGame();
 
   const [playState, setPlayState] = useState<PlayState>("turn");
@@ -113,6 +117,7 @@ export default function PlayPage() {
             label={`เทิร์น ${currentTurnIndex + 1} / ${totalTurns}`}
             sx={{ backgroundColor: "#1B7B7E", color: "white", fontWeight: 600 }}
           />
+          <GlobalTimer onTimeUp={handleFinishGame} />
           <Button
             variant="outlined" color="error" size="small"
             startIcon={<StopCircleRoundedIcon />}
@@ -204,7 +209,7 @@ export default function PlayPage() {
                             {p.name}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            ตอบแล้ว {p.stats.questionsAnswered} ข้อ
+                            ตอบแล้ว {p.stats.questionsAnswered} ข้อ · 🗝️ {p.stats.passTokens} Pass
                           </Typography>
                         </Box>
                         {isActive && <Chip label="ตาเล่น" size="small" sx={{ backgroundColor: pChar?.baseColor + "22", color: pChar?.baseColor, fontWeight: 600 }} />}
@@ -245,7 +250,7 @@ export default function PlayPage() {
           )}
 
           {/* ─── QUESTION + TIMER ─── */}
-          {(playState === "question" || playState === "result") && currentQuestion && (
+          {(playState === "question" || playState === "result" || playState === "share") && currentQuestion && (
             <motion.div key="question" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.3 }}>
               <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
                 <CountdownTimer
@@ -260,21 +265,57 @@ export default function PlayPage() {
               />
 
               {/* After answer */}
-              {playState === "result" && (
+              {(playState === "result" || playState === "share") && (
                 <Box component={motion.div} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} sx={{ mt: 3 }}>
                   <Box sx={{ textAlign: "center", p: 2.5, borderRadius: 3, backgroundColor: "#E8F5FE", mb: 2 }}>
-                    <Typography variant="h6" fontWeight={600}>
+                    <Typography variant="h6" fontWeight={600} color="#1B7B7E">
                       {selectedAnswer === null ? "⏰ หมดเวลา!" : "✨ บันทึกคำตอบแล้ว!"}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                      คะแนนความสัมพันธ์ถูกบันทึกแล้ว
-                    </Typography>
                   </Box>
-                  <Button variant="contained" color="success" fullWidth
-                    startIcon={<CheckCircleRoundedIcon />} onClick={handleFinishTurn}
-                    sx={{ py: 1.5, background: "linear-gradient(135deg, #4CAF50, #81C784)" }}>
-                    จบเทิร์น
-                  </Button>
+
+                  {playState === "result" && selectedAnswer !== null && (
+                    <Box sx={{ display: "flex", gap: 2, mb: 1 }}>
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        startIcon={<RecordVoiceOverRoundedIcon />}
+                        onClick={() => setPlayState("share")}
+                        sx={{
+                          py: 1.5,
+                          background: "linear-gradient(135deg, #4CAF50, #81C784)",
+                          boxShadow: "0 4px 15px rgba(76,175,80,0.3)",
+                        }}
+                      >
+                        แชร์เหตุผล
+                      </Button>
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        disabled={currentPlayer.stats.passTokens <= 0}
+                        startIcon={<VpnKeyRoundedIcon />}
+                        onClick={() => {
+                          usePassToken(currentPlayer.id);
+                          handleFinishTurn();
+                        }}
+                        sx={{
+                          py: 1.5,
+                          background: "linear-gradient(135deg, #E8A030, #F4C47C)",
+                          boxShadow: "0 4px 15px rgba(232,160,48,0.3)",
+                          color: "white",
+                        }}
+                      >
+                        ใช้ Pass Token ({currentPlayer.stats.passTokens})
+                      </Button>
+                    </Box>
+                  )}
+
+                  {(playState === "share" || selectedAnswer === null) && (
+                    <Button variant="contained" color="success" fullWidth
+                      startIcon={<CheckCircleRoundedIcon />} onClick={handleFinishTurn}
+                      sx={{ mt: 1, py: 1.5, background: "linear-gradient(135deg, #1B7B7E, #5BB8A8)" }}>
+                      จบเทิร์น
+                    </Button>
+                  )}
                 </Box>
               )}
             </motion.div>

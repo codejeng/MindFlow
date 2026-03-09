@@ -19,7 +19,7 @@ import CloseIcon from "@mui/icons-material/Close";
 
 export default function SetupPage() {
   const router = useRouter();
-  const { players, addPlayer, removePlayer, setTurnOrder, setGamePhase } = useGame();
+  const { players, addPlayer, removePlayer, setTurnOrder, setGamePhase, timeLimit, setTimeLimit } = useGame();
   const [name, setName] = useState("");
   const [role, setRole] = useState<PlayerRole>("parent");
   const [selectedChar, setSelectedChar] = useState(CHARACTERS[0].id);
@@ -204,6 +204,34 @@ export default function SetupPage() {
             </Box>
           )}
         </Box>
+
+        {/* Settings: Game Timer */}
+        {players.length >= 2 && (
+          <Box
+            component={motion.div}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            sx={{ backgroundColor: "white", borderRadius: 2, p: 3, mb: 4, boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}
+          >
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+              ตั้งเวลาการเล่น
+            </Typography>
+            <ToggleButtonGroup
+              color="primary"
+              value={timeLimit}
+              exclusive
+              onChange={(_, val) => val && setTimeLimit(val)}
+              fullWidth
+            >
+              <ToggleButton value={45} sx={{ py: 1.5, fontWeight: 600 }}>45 นาที</ToggleButton>
+              <ToggleButton value={60} sx={{ py: 1.5, fontWeight: 600 }}>60 นาที</ToggleButton>
+              <ToggleButton value={90} sx={{ py: 1.5, fontWeight: 600 }}>90 นาที</ToggleButton>
+            </ToggleButtonGroup>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1.5, textAlign: "center" }}>
+              *แนะนำ 60 นาทีสำหรับผู้เล่น 3 คนขึ้นไป
+            </Typography>
+          </Box>
+        )}
 
         {players.length >= 2 && (
           <Box component={motion.div} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
