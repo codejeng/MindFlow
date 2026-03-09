@@ -318,7 +318,7 @@ export default function Home() {
               textTransform: "none",
             }}
           >
-            เริ่มใช้งาน 🎯
+            เริ่มใช้งาน
           </Button>
         </Box>
       </Container>

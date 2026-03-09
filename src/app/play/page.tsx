@@ -15,7 +15,7 @@ import CountdownTimer from "@/components/common/CountdownTimer";
 import QuestionCard from "@/components/common/QuestionCard";
 import PageTransition from "@/components/common/PageTransition";
 import StopCircleRoundedIcon from "@mui/icons-material/StopCircleRounded";
-import QrCodeRoundedIcon from "@mui/icons-material/QrCodeRounded";
+import StyleTwoToneIcon from '@mui/icons-material/StyleTwoTone';
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import UndoRoundedIcon from "@mui/icons-material/UndoRounded";
 import PersonIcon from "@mui/icons-material/Person";
@@ -158,9 +158,9 @@ export default function PlayPage() {
 
               {/* Action buttons */}
               <Button variant="contained" color="primary" fullWidth size="large"
-                startIcon={<QrCodeRoundedIcon />} onClick={() => setPlayState("input")}
+                startIcon={<StyleTwoToneIcon />} onClick={() => setPlayState("input")}
                 sx={{ py: 2, mb: 2, fontSize: "1.1rem" }}>
-                ใส่รหัสคำถาม
+                เล่นการ์ด
               </Button>
 
               <Box sx={{ display: "flex", gap: 2 }}>
