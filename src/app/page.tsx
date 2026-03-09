@@ -1,13 +1,17 @@
 "use client";
 
-import { Box, Typography, Button, Container } from "@mui/material";
+import { Box, Typography, Button, Container, Avatar, Menu, MenuItem, CircularProgress } from "@mui/material";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
 import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded";
 import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import MedicalServicesOutlinedIcon from "@mui/icons-material/MedicalServicesOutlined";
+import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
+import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
 
 const FEATURES = [
   {
@@ -38,6 +42,14 @@ const FEATURES = [
 
 export default function Home() {
   const router = useRouter();
+  const { user, loading, signOut } = useAuth();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  const handleLogout = async () => {
+    setAnchorEl(null);
+    await signOut();
+    router.refresh();
+  };
 
   return (
     <Box
@@ -77,32 +89,70 @@ export default function Home() {
 
         {/* Auth buttons */}
         <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-          <Button
-            size="small"
-            sx={{
-              color: "#555",
-              textTransform: "none",
-              fontWeight: 500,
-              fontSize: "0.8rem",
-            }}
-          >
-            เข้าสู่ระบบ
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            sx={{
-              background: "linear-gradient(135deg, #1B7B7E, #5BB8A8)",
-              textTransform: "none",
-              fontWeight: 600,
-              borderRadius: 5,
-              px: 2,
-              fontSize: "0.8rem",
-              boxShadow: "0 2px 10px rgba(27,123,126,0.3)",
-            }}
-          >
-            สมัครสมาชิก
-          </Button>
+          {loading ? (
+            <CircularProgress size={24} sx={{ color: "#1B7B7E" }} />
+          ) : user ? (
+            <>
+              <Avatar
+                onClick={(e) => setAnchorEl(e.currentTarget)}
+                sx={{
+                  width: 36, height: 36,
+                  background: "linear-gradient(135deg, #1B7B7E, #5BB8A8)",
+                  cursor: "pointer",
+                  fontSize: "0.9rem",
+                  fontWeight: 700,
+                  "&:hover": { boxShadow: "0 2px 10px rgba(27,123,126,0.3)" },
+                }}
+              >
+                {user.email?.charAt(0).toUpperCase()}
+              </Avatar>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={() => setAnchorEl(null)}
+                PaperProps={{
+                  sx: { borderRadius: 3, mt: 1, minWidth: 180, boxShadow: "0 8px 30px rgba(0,0,0,0.12)" },
+                }}
+              >
+                <MenuItem disabled sx={{ opacity: 1 }}>
+                  <PersonOutlineRoundedIcon sx={{ mr: 1, fontSize: 18, color: "#999" }} />
+                  <Typography variant="body2" noWrap sx={{ maxWidth: 140, color: "#555" }}>
+                    {user.email}
+                  </Typography>
+                </MenuItem>
+                <MenuItem onClick={handleLogout} sx={{ color: "#E05A7A" }}>
+                  <LogoutRoundedIcon sx={{ mr: 1, fontSize: 18 }} />
+                  ออกจากระบบ
+                </MenuItem>
+              </Menu>
+            </>
+          ) : (
+            <>
+              <Button
+                size="small"
+                onClick={() => router.push("/login")}
+                sx={{
+                  color: "#555", textTransform: "none",
+                  fontWeight: 500, fontSize: "0.8rem",
+                }}
+              >
+                เข้าสู่ระบบ
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => router.push("/signup")}
+                sx={{
+                  background: "linear-gradient(135deg, #1B7B7E, #5BB8A8)",
+                  textTransform: "none", fontWeight: 600,
+                  borderRadius: 5, px: 2, fontSize: "0.8rem",
+                  boxShadow: "0 2px 10px rgba(27,123,126,0.3)",
+                }}
+              >
+                สมัครสมาชิก
+              </Button>
+            </>
+          )}
         </Box>
       </Box>
 
@@ -117,24 +167,13 @@ export default function Home() {
         >
           <Box
             sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 0.75,
-              backgroundColor: "#FFF8E1",
-              border: "1px solid #FFE082",
-              borderRadius: 5,
-              px: 2.5,
-              py: 0.75,
+              display: "inline-flex", alignItems: "center", gap: 0.75,
+              backgroundColor: "#FFF8E1", border: "1px solid #FFE082",
+              borderRadius: 5, px: 2.5, py: 0.75,
             }}
           >
             <Typography sx={{ fontSize: "0.85rem" }}>✨</Typography>
-            <Typography
-              sx={{
-                fontSize: "0.85rem",
-                fontWeight: 500,
-                color: "#B8860B",
-              }}
-            >
+            <Typography sx={{ fontSize: "0.85rem", fontWeight: 500, color: "#B8860B" }}>
               สุขภาพจิตที่ดีเริ่มที่บ้าน
             </Typography>
           </Box>
@@ -150,19 +189,14 @@ export default function Home() {
           <Typography
             variant="h4"
             sx={{
-              fontWeight: 700,
-              color: "#2D3748",
-              lineHeight: 1.4,
-              mb: 2,
+              fontWeight: 700, color: "#2D3748", lineHeight: 1.4, mb: 2,
               fontSize: { xs: "1.6rem", sm: "2rem" },
             }}
           >
             แพลตฟอร์มครบวงจร
             <br />
             สำหรับ
-            <Box component="span" sx={{ color: "#1B7B7E" }}>
-              สุขภาพจิต
-            </Box>
+            <Box component="span" sx={{ color: "#1B7B7E" }}>สุขภาพจิต</Box>
             <br />
             ครอบครัว
           </Typography>
@@ -170,12 +204,8 @@ export default function Home() {
           <Typography
             variant="body1"
             sx={{
-              color: "#718096",
-              fontWeight: 400,
-              lineHeight: 1.7,
-              mb: 3,
-              px: 2,
-              fontSize: { xs: "0.9rem", sm: "1rem" },
+              color: "#718096", fontWeight: 400, lineHeight: 1.7,
+              mb: 3, px: 2, fontSize: { xs: "0.9rem", sm: "1rem" },
             }}
           >
             ผ่านเกม AI และการปรึกษาจากผู้เชี่ยวชาญ เพื่อ
@@ -191,14 +221,8 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
           sx={{
-            position: "relative",
-            width: "100%",
-            maxWidth: 380,
-            mx: "auto",
-            mb: 4,
-            borderRadius: 4,
-            overflow: "hidden",
-            boxShadow: "0 12px 40px rgba(0,0,0,0.1)",
+            position: "relative", width: "100%", maxWidth: 380, mx: "auto", mb: 4,
+            borderRadius: 4, overflow: "hidden", boxShadow: "0 12px 40px rgba(0,0,0,0.1)",
           }}
         >
           <Image
@@ -206,35 +230,19 @@ export default function Home() {
             alt="MindFlow Board Game"
             width={380}
             height={280}
-            style={{
-              width: "100%",
-              height: "auto",
-              objectFit: "cover",
-              borderRadius: "16px",
-            }}
+            style={{ width: "100%", height: "auto", objectFit: "cover", borderRadius: "16px" }}
             priority
           />
-          {/* Caption overlay */}
           <Box
             sx={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
+              position: "absolute", bottom: 0, left: 0, right: 0,
               background: "linear-gradient(transparent, rgba(0,0,0,0.5))",
-              py: 1.5,
-              px: 2,
-              borderRadius: "0 0 16px 16px",
+              py: 1.5, px: 2, borderRadius: "0 0 16px 16px",
             }}
           >
             <Typography
               variant="body2"
-              sx={{
-                color: "white",
-                fontWeight: 500,
-                fontStyle: "italic",
-                fontSize: "0.8rem",
-              }}
+              sx={{ color: "white", fontWeight: 500, fontStyle: "italic", fontSize: "0.8rem" }}
             >
               Family Board Game Experience
             </Typography>
@@ -247,13 +255,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 1.5,
-            mb: 4,
-            px: 1,
-          }}
+          sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5, mb: 4, px: 1 }}
         >
           {FEATURES.map((feature, i) => (
             <Box
@@ -262,11 +264,8 @@ export default function Home() {
               whileHover={{ y: -4, boxShadow: "0 8px 25px rgba(0,0,0,0.1)" }}
               transition={{ duration: 0.2 }}
               sx={{
-                backgroundColor: feature.bg,
-                borderRadius: 3,
-                p: 2.5,
-                textAlign: "center",
-                cursor: "default",
+                backgroundColor: feature.bg, borderRadius: 3, p: 2.5,
+                textAlign: "center", cursor: "default",
                 boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
                 border: "1px solid rgba(0,0,0,0.04)",
               }}
@@ -274,12 +273,7 @@ export default function Home() {
               <Box sx={{ mb: 1 }}>{feature.icon}</Box>
               <Typography
                 variant="body2"
-                sx={{
-                  fontWeight: 700,
-                  color: "#2D3748",
-                  mb: 0.25,
-                  fontSize: "0.85rem",
-                }}
+                sx={{ fontWeight: 700, color: "#2D3748", mb: 0.25, fontSize: "0.85rem" }}
               >
                 {feature.title}
               </Typography>
@@ -307,11 +301,9 @@ export default function Home() {
             variant="contained"
             fullWidth
             size="large"
-            onClick={() => router.push("/setup")}
+            onClick={() => router.push(user ? "/setup" : "/login")}
             sx={{
-              py: 2,
-              fontSize: "1.15rem",
-              fontWeight: 700,
+              py: 2, fontSize: "1.15rem", fontWeight: 700,
               borderRadius: 4,
               background: "linear-gradient(135deg, #1B7B7E, #5BB8A8)",
               boxShadow: "0 6px 25px rgba(27,123,126,0.3)",
