@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase";
 import type { User, AuthError } from "@supabase/supabase-js";
 
@@ -23,7 +23,9 @@ export function useAuth(): AuthContextType {
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
-    const supabase = createClient();
+
+    // Create client once per provider instance (reads env vars at render time)
+    const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
         // Get initial session
@@ -39,22 +41,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         return () => subscription.unsubscribe();
-    }, [supabase.auth]);
+    }, [supabase]);
 
-    const signIn = useCallback(async (email: string, password: string) => {
+    const signIn = async (email: string, password: string) => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         return { error };
-    }, [supabase.auth]);
+    };
 
-    const signUp = useCallback(async (email: string, password: string) => {
+    const signUp = async (email: string, password: string) => {
         const { error } = await supabase.auth.signUp({ email, password });
         return { error };
-    }, [supabase.auth]);
+    };
 
-    const signOut = useCallback(async () => {
+    const signOut = async () => {
         await supabase.auth.signOut();
         setUser(null);
-    }, [supabase.auth]);
+    };
 
     return (
         <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>

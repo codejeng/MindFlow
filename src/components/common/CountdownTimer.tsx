@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Box, Typography } from "@mui/material";
 import { motion } from "framer-motion";
 
@@ -18,19 +18,23 @@ export default function CountdownTimer({
   size = 160,
 }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState(seconds);
+  // Use a ref so the interval callback always has the latest onComplete
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
+  // Reset timer when seconds prop changes (e.g. new question)
   useEffect(() => {
     setTimeLeft(seconds);
   }, [seconds]);
 
+  // Tick effect – no timeLeft in deps so the interval isn't recreated every second
   useEffect(() => {
-    if (!isRunning || timeLeft <= 0) return;
+    if (!isRunning) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          onComplete();
           return 0;
         }
         return prev - 1;
@@ -38,9 +42,16 @@ export default function CountdownTimer({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isRunning, timeLeft, onComplete]);
+  }, [isRunning]); // ← removed timeLeft; removed onComplete (using ref instead)
 
-  const progress = timeLeft / seconds;
+  // Fire onComplete AFTER render, not inside a setState updater
+  useEffect(() => {
+    if (timeLeft === 0 && isRunning) {
+      onCompleteRef.current();
+    }
+  }, [timeLeft, isRunning]);
+
+  const progress = seconds > 0 ? timeLeft / seconds : 0;
   const strokeWidth = 8;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;

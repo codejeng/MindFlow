@@ -301,7 +301,7 @@ export default function Home() {
             variant="contained"
             fullWidth
             size="large"
-            onClick={() => router.push(user ? "/setup" : "/login")}
+            onClick={() => router.push("/setup")}
             sx={{
               py: 2, fontSize: "1.15rem", fontWeight: 700,
               borderRadius: 4,

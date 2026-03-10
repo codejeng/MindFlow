@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-const PROTECTED_ROUTES = ["/setup", "/order", "/play", "/summary"];
+const PROTECTED_ROUTES: string[] = []; // ไม่บังคับ login ก่อนเล่น
 
 export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
