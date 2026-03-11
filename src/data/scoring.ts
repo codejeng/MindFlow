@@ -52,7 +52,8 @@ export function normalizeScores(
 export interface ChildProfile {
   name: string;
   description: string;
-  cardImage: string; // path under /cards/
+  cardImageFront: string; // 1*.png
+  cardImageBack: string;  // 2*.png
   emoji: string;
   color: string;
 }
@@ -61,35 +62,40 @@ const CHILD_PROFILES: Record<string, ChildProfile> = {
   confident: {
     name: "เด็กที่มั่นใจและกล้าแสดงออก",
     description: "มีความเชื่อมั่นในตัวเองสูงและสื่อสารได้ดี กล้าแสดงความคิดเห็นอย่างมั่นใจ",
-    cardImage: "/cards/1เด็กเชื่อมั่นในตัวเองสูง.png",
+    cardImageFront: "/cards/1เด็กเชื่อมั่นในตัวเองสูง.png",
+    cardImageBack: "/cards/2เด็กเชื่อมั่นในตัวเองสูง.png",
     emoji: "💪",
     color: "#7B68EE",
   },
   resilient: {
     name: "เด็กที่ยืดหยุ่นและผ่านปัญหาได้ดี",
     description: "มีความยืดหยุ่นสูงและจัดการอารมณ์ได้ดี สามารถรับมือกับอุปสรรคได้อย่างมั่นคง",
-    cardImage: "/cards/1เด็กไม่ยอมแพ้อะไรง่ายๆ.png",
+    cardImageFront: "/cards/1เด็กไม่ยอมแพ้อะไรง่ายๆ.png",
+    cardImageBack: "/cards/2เด็กไม่ยอมแพ้อะไรง่ายๆ.png",
     emoji: "🌱",
     color: "#E8A838",
   },
   communicator: {
     name: "เด็กที่เปราะบางแต่สื่อสารได้ดี",
     description: "แม้ยังไม่มั่นใจในตัวเองมาก แต่สื่อสารความรู้สึกได้ดี สามารถขอความช่วยเหลือเมื่อต้องการ",
-    cardImage: "/cards/1เด็กสื่อสารความรู้สึกได้.png",
+    cardImageFront: "/cards/1เด็กสื่อสารความรู้สึกได้.png",
+    cardImageBack: "/cards/2เด็กสื่อสารความรู้สึกได้.png",
     emoji: "💬",
     color: "#1B7B7E",
   },
   emotionally_regulated: {
     name: "เด็กที่ควบคุมอารมณ์ได้ดี",
     description: "จัดการอารมณ์ตัวเองได้อย่างดีเยี่ยม รู้จักสงบสติอารมณ์เมื่อเผชิญสถานการณ์ยาก",
-    cardImage: "/cards/1เด็กจัดการอาร์มได้ดี.png",
+    cardImageFront: "/cards/1เด็กจัดการอาร์มได้ดี.png",
+    cardImageBack: "/cards/2เด็กจัดการอาร์มได้ดี.png",
     emoji: "🧘",
     color: "#D4607A",
   },
   anxious: {
     name: "เด็กที่ขี้กังวลและต้องการการสนับสนุน",
     description: "ยังต้องการกำลังใจและการสนับสนุนจากคนรอบข้าง แต่มีศักยภาพที่รอการพัฒนา",
-    cardImage: "",
+    cardImageFront: "",
+    cardImageBack: "",
     emoji: "🤗",
     color: "#9E9E9E",
   },

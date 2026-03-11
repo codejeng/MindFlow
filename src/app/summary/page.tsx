@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 
 import {
   Box, Typography, Button, Container, Card, CardContent, LinearProgress,
@@ -24,6 +25,8 @@ export default function SummaryPage() {
   const { players, turnOrder, questionHistory, resetGame } = useGame();
   const orderedPlayers = turnOrder.map((id) => players.find((p) => p.id === id)).filter(Boolean) as typeof players;
   const totalQuestions = questionHistory.length;
+  
+  const [isFlipped, setIsFlipped] = useState(false);
 
   // ── Aggregate by role ──
   const childPlayers = orderedPlayers.filter((p) => p.role === "child");
@@ -71,20 +74,57 @@ export default function SummaryPage() {
               👧 โปรไฟล์ลูก
             </Typography>
 
-            {/* Card image */}
-            {childProfile.cardImage && (
+            {/* Flippable Card image */}
+            {childProfile.cardImageFront && (
               <Box sx={{
-                position: "relative", width: "100%", maxWidth: 360, mx: "auto", mb: 3,
-                borderRadius: 4, overflow: "hidden",
-                boxShadow: `0 12px 40px ${childProfile.color}30`,
+                perspective: "1000px", width: "100%", maxWidth: 360, mx: "auto", mb: 3,
+                cursor: "pointer",
               }}>
-                <Image
-                  src={childProfile.cardImage}
-                  alt={childProfile.name}
-                  width={360} height={500}
-                  style={{ width: "100%", height: "auto", display: "block" }}
-                  priority
-                />
+                <motion.div
+                  onClick={() => setIsFlipped(!isFlipped)}
+                  initial={false}
+                  animate={{ rotateY: isFlipped ? 180 : 0 }}
+                  transition={{ duration: 0.6, type: "spring", stiffness: 260, damping: 20 }}
+                  style={{
+                    width: "100%", height: "100%", position: "relative",
+                    transformStyle: "preserve-3d", aspectRatio: "360/500",
+                  }}
+                >
+                  {/* Front Side */}
+                  <Box sx={{
+                    position: "absolute", width: "100%", height: "100%",
+                    backfaceVisibility: "hidden", borderRadius: 4, overflow: "hidden",
+                    boxShadow: `0 12px 40px ${childProfile.color}30`,
+                  }}>
+                    <Image
+                      src={childProfile.cardImageFront}
+                      alt={childProfile.name}
+                      fill
+                      style={{ objectFit: "cover" }}
+                      priority
+                    />
+                  </Box>
+
+                  {/* Back Side */}
+                  {childProfile.cardImageBack && (
+                    <Box sx={{
+                      position: "absolute", width: "100%", height: "100%",
+                      backfaceVisibility: "hidden", borderRadius: 4, overflow: "hidden",
+                      boxShadow: `0 12px 40px ${childProfile.color}30`,
+                      transform: "rotateY(180deg)",
+                    }}>
+                      <Image
+                        src={childProfile.cardImageBack}
+                        alt={`${childProfile.name} (ด้านหลัง)`}
+                        fill
+                        style={{ objectFit: "cover" }}
+                      />
+                    </Box>
+                  )}
+                </motion.div>
+                <Typography variant="caption" sx={{ display: "block", textAlign: "center", mt: 1, color: "text.secondary" }}>
+                  👆 แตะที่การ์ดเพื่อพลิกดูด้านหลัง
+                </Typography>
               </Box>
             )}
 
