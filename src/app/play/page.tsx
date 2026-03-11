@@ -42,6 +42,9 @@ export default function PlayPage() {
   const [timerKey, setTimerKey] = useState(0);
   const [inputError, setInputError] = useState("");
   const [confirmFinish, setConfirmFinish] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showPassTokenModal, setShowPassTokenModal] = useState(false);
 
   const currentPlayer = getCurrentPlayer();
   const totalTurns = turnOrder.length;
@@ -54,10 +57,8 @@ export default function PlayPage() {
     if (!question) { setInputError("ไม่พบรหัส " + code); return; }
     setCurrentQuestion(question);
     setSelectedAnswer(null);
-    setTimerKey((k) => k + 1);
-    setTimerRunning(true);
-    setPlayState("question");
     setInputError("");
+    setShowPrivacyModal(true);
   };
 
   const handleAnswer = (choiceIndex: number) => {
@@ -254,6 +255,7 @@ export default function PlayPage() {
             </motion.div>
           )}
 
+
           {/* ─── QUESTION + TIMER ─── */}
           {(playState === "question" || playState === "result" || playState === "share") && currentQuestion && (
             <motion.div key="question" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.3 }}>
@@ -284,7 +286,7 @@ export default function PlayPage() {
                         variant="contained"
                         fullWidth
                         startIcon={<RecordVoiceOverRoundedIcon />}
-                        onClick={() => setPlayState("share")}
+                        onClick={() => setShowShareModal(true)}
                         sx={{
                           py: 1.5,
                           background: "linear-gradient(135deg, #4CAF50, #81C784)",
@@ -298,10 +300,7 @@ export default function PlayPage() {
                         fullWidth
                         disabled={currentPlayer.stats.passTokens <= 0}
                         startIcon={<VpnKeyRoundedIcon />}
-                        onClick={() => {
-                          usePassToken(currentPlayer.id);
-                          handleFinishTurn();
-                        }}
+                        onClick={() => setShowPassTokenModal(true)}
                         sx={{
                           py: 1.5,
                           background: "linear-gradient(135deg, #E8A030, #F4C47C)",
@@ -313,6 +312,7 @@ export default function PlayPage() {
                       </Button>
                     </Box>
                   )}
+
 
                   {(playState === "share" || selectedAnswer === null) && (
                     <Button variant="contained" color="success" fullWidth
@@ -337,6 +337,143 @@ export default function PlayPage() {
             <Button onClick={() => setConfirmFinish(false)} sx={{ borderRadius: 3 }}>ยกเลิก</Button>
             <Button variant="contained" color="error" onClick={handleFinishGame} sx={{ borderRadius: 3 }}>จบเกม</Button>
           </DialogActions>
+        </Dialog>
+
+        {/* ─── PRIVACY CONFIRM MODAL ─── */}
+        <Dialog
+          open={showPrivacyModal}
+          onClose={() => { setShowPrivacyModal(false); setCurrentQuestion(null); }}
+          PaperProps={{ sx: { borderRadius: 2, p: 0, overflow: "hidden", maxWidth: 400 } }}
+        >
+          <Box sx={{
+            textAlign: "center", p: 4,
+            background: "linear-gradient(145deg, #FFF8E1, #FFFDE7)",
+          }}>
+            <Box sx={{ fontSize: "4rem", mb: 1 }}>📱</Box>
+            <Box sx={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              width: 52, height: 52, borderRadius: "50%",
+              backgroundColor: "#FFF3E0", border: "2px solid #FFB74D", mb: 2,
+            }}>
+              <Typography sx={{ fontSize: "1.6rem" }}>🔒</Typography>
+            </Box>
+            <Typography variant="h6" fontWeight={700} sx={{ color: "#E65100", mb: 1 }}>
+              เตรียมตัวก่อนเริ่ม!
+            </Typography>
+            <Typography variant="body1" sx={{ color: "#5D4037", lineHeight: 1.8, mb: 2, fontWeight: 500 }}>
+              กรุณายกมือถือโดยไม่ให้ใครเห็น<br />คำถามก่อนเริ่มตอบคำถาม
+            </Typography>
+            {currentQuestion && (
+              <Box sx={{
+                display: "inline-flex", alignItems: "center", gap: 1,
+                backgroundColor: "#FFF3E0", borderRadius: 3, px: 2.5, py: 0.75, mb: 2,
+                border: "1px solid #FFCC80",
+              }}>
+                <Typography variant="body2" fontWeight={600} sx={{ color: "#E65100" }}>
+                  🃏 การ์ด {currentQuestion.code}
+                </Typography>
+                <Typography variant="caption" sx={{ color: "#8D6E63" }}>
+                  ({currentQuestion.ageGroup})
+                </Typography>
+              </Box>
+            )}
+            <Box sx={{ display: "flex", gap: 2, mt: 1 }}>
+              <Button fullWidth variant="outlined" onClick={() => { setShowPrivacyModal(false); setCurrentQuestion(null); }}
+                sx={{ py: 1.5, borderRadius: 3, borderColor: "#BDBDBD", color: "#757575", fontWeight: 600 }}>
+                ← ย้อนกลับ
+              </Button>
+              <Button fullWidth variant="contained" onClick={() => {
+                setShowPrivacyModal(false);
+                setTimerKey((k) => k + 1);
+                setTimerRunning(true);
+                setPlayState("question");
+              }} sx={{
+                py: 1.5, borderRadius: 3,
+                background: "linear-gradient(135deg, #FF9800, #F57C00)",
+                fontWeight: 700, boxShadow: "0 4px 14px rgba(255,152,0,0.35)",
+                "&:hover": { background: "linear-gradient(135deg, #F57C00, #EF6C00)" },
+              }}>
+                ✅ ตกลง
+              </Button>
+            </Box>
+          </Box>
+        </Dialog>
+
+        {/* ─── SHARE CONFIRM MODAL ─── */}
+        <Dialog
+          open={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          PaperProps={{ sx: { borderRadius: 2, p: 0, overflow: "hidden", maxWidth: 400 } }}
+        >
+          <Box sx={{
+            textAlign: "center", p: 4,
+            background: "linear-gradient(145deg, #E8F5E9, #F1F8E9)",
+          }}>
+            <Box sx={{ fontSize: "3.5rem", mb: 1 }}>🗣️</Box>
+            <Typography variant="h6" fontWeight={700} sx={{ color: "#2E7D32", mb: 1 }}>
+              แชร์คำตอบของคุณ
+            </Typography>
+            <Typography variant="body1" sx={{ color: "#33691E", lineHeight: 1.8, mb: 2.5, fontWeight: 500 }}>
+              กรุณาเลือกแชร์คำถามและคำตอบ<br />กับผู้เล่น 1 คน
+            </Typography>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Button fullWidth variant="outlined" onClick={() => setShowShareModal(false)}
+                sx={{ py: 1.5, borderRadius: 3, borderColor: "#A5D6A7", color: "#2E7D32", fontWeight: 600 }}>
+                ← ย้อนกลับ
+              </Button>
+              <Button fullWidth variant="contained" onClick={() => { setShowShareModal(false); setPlayState("share"); }}
+                sx={{
+                  py: 1.5, borderRadius: 3,
+                  background: "linear-gradient(135deg, #4CAF50, #66BB6A)",
+                  fontWeight: 700, boxShadow: "0 4px 14px rgba(76,175,80,0.35)",
+                  "&:hover": { background: "linear-gradient(135deg, #388E3C, #4CAF50)" },
+                }}>
+                ✅ ตกลง
+              </Button>
+            </Box>
+          </Box>
+        </Dialog>
+
+        {/* ─── PASS TOKEN CONFIRM MODAL ─── */}
+        <Dialog
+          open={showPassTokenModal}
+          onClose={() => setShowPassTokenModal(false)}
+          PaperProps={{ sx: { borderRadius: 2, p: 0, overflow: "hidden", maxWidth: 400 } }}
+        >
+          <Box sx={{
+            textAlign: "center", p: 4,
+            background: "linear-gradient(145deg, #FFF8E1, #FFF3E0)",
+          }}>
+            <Box sx={{ fontSize: "3.5rem", mb: 1 }}>🗝️</Box>
+            <Typography variant="h6" fontWeight={700} sx={{ color: "#E65100", mb: 1 }}>
+              ใช้ Pass Token?
+            </Typography>
+            <Typography variant="body1" sx={{ color: "#5D4037", lineHeight: 1.8, mb: 1, fontWeight: 500 }}>
+              ข้ามการแชร์เหตุผลและจบเทิร์นทันที
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#8D6E63", mb: 2.5 }}>
+              คุณมี Pass Token เหลือ {currentPlayer?.stats.passTokens ?? 0} ชิ้น
+            </Typography>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Button fullWidth variant="outlined" onClick={() => setShowPassTokenModal(false)}
+                sx={{ py: 1.5, borderRadius: 3, borderColor: "#BDBDBD", color: "#757575", fontWeight: 600 }}>
+                ← ย้อนกลับ
+              </Button>
+              <Button fullWidth variant="contained" onClick={() => {
+                setShowPassTokenModal(false);
+                if (currentPlayer) { usePassToken(currentPlayer.id); }
+                handleFinishTurn();
+              }} sx={{
+                py: 1.5, borderRadius: 3,
+                background: "linear-gradient(135deg, #E8A030, #F4C47C)",
+                fontWeight: 700, boxShadow: "0 4px 14px rgba(232,160,48,0.35)",
+                color: "white",
+                "&:hover": { background: "linear-gradient(135deg, #D4972E, #E8A030)" },
+              }}>
+                ✅ ใช้ Token
+              </Button>
+            </Box>
+          </Box>
         </Dialog>
       </Container>
     </PageTransition>

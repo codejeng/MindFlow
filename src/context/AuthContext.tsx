@@ -28,11 +28,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
-        // Get initial session
-        supabase.auth.getUser().then((response: { data: { user: User | null } }) => {
-            setUser(response.data.user);
-            setLoading(false);
-        });
+        // Get initial session — wrapped in try-catch to handle navigator.locks abort
+        supabase.auth.getUser()
+            .then((response: { data: { user: User | null } }) => {
+                setUser(response.data.user);
+                setLoading(false);
+            })
+            .catch(() => {
+                // Silently handle DOMException: lock request aborted (happens on fast navigation)
+                setLoading(false);
+            });
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
