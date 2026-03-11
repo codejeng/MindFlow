@@ -7,78 +7,46 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useGame, CHARACTERS, type TraitPoints } from "@/context/GameContext";
+import {
+  normalizeScores, scoreLevel, scoreLevelLabel, scoreLevelColor,
+  getChildProfile, getParentProfile,
+  CHILD_TRAIT_META, PARENT_TRAIT_META,
+  type ChildProfile, type ParentProfile,
+} from "@/data/scoring";
 import PageTransition from "@/components/common/PageTransition";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import ReplayRoundedIcon from "@mui/icons-material/ReplayRounded";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-
-// ─── Trait metadata ────────────────────────────────────────────────────────────
-
-const TRAIT_META: Record<keyof TraitPoints, { label: string; icon: string; color: string; description: string }> = {
-  SE: { label: "ความเชื่อมั่นในตนเอง", icon: "💪", color: "#7B68EE", description: "เชื่อว่าตัวเองทำได้ มั่นใจในศักยภาพ" },
-  COM: { label: "การสื่อสาร", icon: "💬", color: "#1B7B7E", description: "พูดคุย รับฟัง และแสดงออกอย่างเหมาะสม" },
-  RES: { label: "ความยืดหยุ่น", icon: "🌱", color: "#E8A838", description: "ปรับตัว ฟื้นตัว และไม่ท้อต่ออุปสรรค" },
-  ER: { label: "การจัดการอารมณ์", icon: "🧘", color: "#D4607A", description: "รู้จักอารมณ์ตนเองและควบคุมได้" },
-};
-
-// ─── Relationship type based on dominant traits ─────────────────────────────
-
-interface RelationshipType {
-  title: string;
-  subtitle: string;
-  emoji: string;
-  bgGradient: string;
-  borderColor: string;
-  description: string;
-}
-
-function getRelationshipType(traits: TraitPoints): RelationshipType {
-  const entries = Object.entries(traits) as [keyof TraitPoints, number][];
-  const dominant = entries.sort((a, b) => b[1] - a[1]).slice(0, 2).map((e) => e[0]);
-  const total = entries.reduce((s, e) => s + e[1], 0);
-
-  if (total === 0) {
-    return { title: "กำลังเริ่มต้นการเดินทาง", subtitle: "ยังมีเวลาพัฒนาได้เสมอ", emoji: "🌱", bgGradient: "linear-gradient(135deg, #F5EBC8, #FDF9F0)", borderColor: "#E8D89A", description: "ทุกก้าวเล็กๆ ของการเรียนรู้ คือจุดเริ่มต้นที่ดี ลองตอบคำถามให้มากขึ้น!" };
-  }
-
-  if (dominant.includes("SE") && dominant.includes("RES")) {
-    return { title: "นักสู้ผู้มั่นใจ", subtitle: "เชื่อมั่นในตัวเอง และไม่ยอมแพ้", emoji: "💪🌱", bgGradient: "linear-gradient(135deg, #E8E0FA, #FFF8E1)", borderColor: "#7B68EE", description: "มีความมั่นใจในตัวเองสูงและสามารถฟื้นตัวจากปัญหาได้ดี เป็นพื้นฐานสำคัญของการเติบโต" };
-  }
-  if (dominant.includes("COM") && dominant.includes("ER")) {
-    return { title: "นักสื่อสารผู้ใจเย็น", subtitle: "พูดคุยเก่ง และจัดการอารมณ์ได้ดี", emoji: "💬🧘", bgGradient: "linear-gradient(135deg, #B8E4F0, #FADCE3)", borderColor: "#1B7B7E", description: "มีทักษะการสื่อสารที่ดี ควบคู่กับการจัดการอารมณ์อย่างเหมาะสม ช่วยให้อยู่ร่วมกับคนอื่นได้อย่างราบรื่น" };
-  }
-  if (dominant.includes("SE") && dominant.includes("COM")) {
-    return { title: "ผู้นำที่กล้าพูด", subtitle: "มั่นใจและสื่อสารได้อย่างชัดเจน", emoji: "💪💬", bgGradient: "linear-gradient(135deg, #E8E0FA, #B8E4F0)", borderColor: "#5B68AE", description: "เชื่อมั่นในตัวเองและสามารถบอกความคิดให้คนอื่นเข้าใจได้ เหมาะกับบทบาทผู้นำ" };
-  }
-  if (dominant.includes("RES") && dominant.includes("ER")) {
-    return { title: "นักฟื้นตัวผู้สงบ", subtitle: "รับมือกับปัญหาได้อย่างใจเย็น", emoji: "🌱🧘", bgGradient: "linear-gradient(135deg, #FFF8E1, #FADCE3)", borderColor: "#E8A838", description: "มีความยืดหยุ่นสูงและจัดการอารมณ์ได้ดี ทำให้รับมือกับสถานการณ์ยากๆ ได้อย่างสงบ" };
-  }
-
-  // Default: most prominent single trait
-  const top = dominant[0];
-  const m = TRAIT_META[top];
-  return {
-    title: `โดดเด่นด้าน${m.label}`,
-    subtitle: m.description,
-    emoji: m.icon,
-    bgGradient: `linear-gradient(135deg, ${m.color}15, ${m.color}08)`,
-    borderColor: m.color,
-    description: `โดดเด่นด้าน${m.label}เป็นพิเศษ ลองพัฒนาด้านอื่นๆ เพิ่มเติมเพื่อทักษะที่สมดุล`,
-  };
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function SummaryPage() {
   const router = useRouter();
-  const { players, turnOrder, totalTraitPoints, questionHistory, resetGame } = useGame();
+  const { players, turnOrder, questionHistory, resetGame } = useGame();
   const orderedPlayers = turnOrder.map((id) => players.find((p) => p.id === id)).filter(Boolean) as typeof players;
   const totalQuestions = questionHistory.length;
-  const relType = getRelationshipType(totalTraitPoints);
 
-  // Max points for scaling
-  const traitEntries = Object.entries(totalTraitPoints) as [keyof TraitPoints, number][];
-  const maxPoints = Math.max(...traitEntries.map((e) => e[1]), 1);
+  // ── Aggregate by role ──
+  const childPlayers = orderedPlayers.filter((p) => p.role === "child");
+  const parentPlayers = orderedPlayers.filter((p) => p.role === "parent");
+
+  function aggregateRole(rolePlayers: typeof players): { raw: TraitPoints; questions: number; normalized: TraitPoints } {
+    const raw: TraitPoints = { SE: 0, COM: 0, RES: 0, ER: 0 };
+    let questions = 0;
+    for (const p of rolePlayers) {
+      raw.SE += p.stats.traitPoints.SE;
+      raw.COM += p.stats.traitPoints.COM;
+      raw.RES += p.stats.traitPoints.RES;
+      raw.ER += p.stats.traitPoints.ER;
+      questions += p.stats.questionsAnswered;
+    }
+    return { raw, questions, normalized: normalizeScores(raw, questions) };
+  }
+
+  const childAgg = aggregateRole(childPlayers);
+  const parentAgg = aggregateRole(parentPlayers);
+
+  const childProfile = getChildProfile(childAgg.normalized);
+  const parentProfile = getParentProfile(parentAgg.normalized);
 
   return (
     <PageTransition>
@@ -94,87 +62,91 @@ export default function SummaryPage() {
           </Typography>
         </Box>
 
-        {/* ── RELATIONSHIP CARD ── */}
-        <Box
-          component={motion.div}
-          initial={{ opacity: 0, scale: 0.92 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          sx={{
-            background: relType.bgGradient,
-            border: `3px solid ${relType.borderColor}`,
-            borderRadius: 5, p: 4, mb: 4, textAlign: "center",
-            boxShadow: `0 8px 30px ${relType.borderColor}22`,
-            position: "relative", overflow: "hidden",
-          }}
-        >
-          {/* Decorative blobs */}
-          <Box sx={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, borderRadius: "50%", background: relType.borderColor + "15", filter: "blur(20px)" }} />
-          <Box sx={{ position: "absolute", bottom: -20, left: -20, width: 80, height: 80, borderRadius: "50%", background: relType.borderColor + "10", filter: "blur(18px)" }} />
+        {/* ── CHILD PROFILE CARD ── */}
+        {childPlayers.length > 0 && (
+          <Box component={motion.div} initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }} sx={{ mb: 4 }}>
 
-          {/* Emoji large */}
-          <Box component={motion.div} animate={{ scale: [1, 1.12, 1] }} transition={{ duration: 2.5, repeat: Infinity }}
-            sx={{ fontSize: "3.5rem", mb: 1.5 }}>
-            {relType.emoji}
-          </Box>
-
-          <Typography variant="h5" fontWeight={700} sx={{ color: relType.borderColor, mb: 0.5 }}>
-            {relType.title}
-          </Typography>
-          <Typography variant="body1" fontWeight={500} sx={{ color: "#555", mb: 2 }}>
-            {relType.subtitle}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "#777", lineHeight: 1.7, maxWidth: 360, mx: "auto" }}>
-            {relType.description}
-          </Typography>
-
-          {/* MindFlow logo watermark */}
-          <Box sx={{ mt: 2.5, pt: 2, borderTop: `1px solid ${relType.borderColor}22` }}>
-            <Typography variant="caption" fontWeight={600} sx={{ color: relType.borderColor, letterSpacing: "0.05em" }}>
-              🧠 mindflow Board Game
+            <Typography variant="h6" fontWeight={700} sx={{ color: "#1B7B7E", mb: 2 }}>
+              👧 โปรไฟล์ลูก
             </Typography>
-          </Box>
-        </Box>
 
-        {/* ── TRAIT RADAR BARS ── */}
-        <Card component={motion.div} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-          sx={{ mb: 4, borderRadius: 4 }}>
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="h6" fontWeight={600} sx={{ mb: 2.5, color: "#1B7B7E" }}>
-              ✨ มิติความสัมพันธ์
-            </Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {traitEntries
-                .sort((a, b) => b[1] - a[1])
-                .map(([key, value], i) => {
-                  const m = TRAIT_META[key];
-                  return (
-                    <Box key={key} component={motion.div} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 + i * 0.08 }}>
-                      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                          <Typography>{m.icon}</Typography>
-                          <Typography variant="body2" fontWeight={600}>{m.label}</Typography>
-                        </Box>
-                        <Typography variant="body2" fontWeight={700} sx={{ color: m.color }}>{value} คะแนน</Typography>
-                      </Box>
-                      <LinearProgress
-                        variant="determinate"
-                        value={Math.round((value / maxPoints) * 100)}
-                        sx={{
-                          height: 10, borderRadius: 5,
-                          backgroundColor: m.color + "18",
-                          "& .MuiLinearProgress-bar": { background: `linear-gradient(90deg, ${m.color}88, ${m.color})`, borderRadius: 5 },
-                        }}
-                      />
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: "block" }}>
-                        {m.description}
-                      </Typography>
-                    </Box>
-                  );
-                })}
+            {/* Card image */}
+            {childProfile.cardImage && (
+              <Box sx={{
+                position: "relative", width: "100%", maxWidth: 360, mx: "auto", mb: 3,
+                borderRadius: 4, overflow: "hidden",
+                boxShadow: `0 12px 40px ${childProfile.color}30`,
+              }}>
+                <Image
+                  src={childProfile.cardImage}
+                  alt={childProfile.name}
+                  width={360} height={500}
+                  style={{ width: "100%", height: "auto", display: "block" }}
+                  priority
+                />
+              </Box>
+            )}
+
+            {/* Profile summary box */}
+            <Box sx={{
+              textAlign: "center", p: 3, borderRadius: 4, mb: 3,
+              background: `linear-gradient(135deg, ${childProfile.color}12, ${childProfile.color}06)`,
+              border: `2px solid ${childProfile.color}40`,
+            }}>
+              <Typography sx={{ fontSize: "2.5rem", mb: 1 }}>{childProfile.emoji}</Typography>
+              <Typography variant="h6" fontWeight={700} sx={{ color: childProfile.color, mb: 0.5 }}>
+                {childProfile.name}
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#666", lineHeight: 1.7 }}>
+                {childProfile.description}
+              </Typography>
             </Box>
-          </CardContent>
-        </Card>
+
+            {/* Trait bars */}
+            <TraitBars
+              scores={childAgg.normalized}
+              meta={CHILD_TRAIT_META}
+              questionsAnswered={childAgg.questions}
+            />
+          </Box>
+        )}
+
+        {/* ── PARENT PROFILE CARD ── */}
+        {parentPlayers.length > 0 && (
+          <Box component={motion.div} initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4, duration: 0.5 }} sx={{ mb: 4 }}>
+
+            <Typography variant="h6" fontWeight={700} sx={{ color: "#1B7B7E", mb: 2 }}>
+              👨‍👩‍👧 โปรไฟล์ผู้ปกครอง
+            </Typography>
+
+            <Box sx={{
+              textAlign: "center", p: 4, borderRadius: 4, mb: 3,
+              background: parentProfile.bgGradient,
+              border: `2px solid ${parentProfile.color}40`,
+              boxShadow: `0 8px 30px ${parentProfile.color}15`,
+            }}>
+              <Typography sx={{ fontSize: "3rem", mb: 1 }}>{parentProfile.emoji}</Typography>
+              <Typography variant="h5" fontWeight={700} sx={{ color: parentProfile.color, mb: 0.5 }}>
+                {parentProfile.name}
+              </Typography>
+              <Typography variant="body2" fontWeight={500} sx={{ color: "#666", mb: 0.5 }}>
+                {parentProfile.nameEn}
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#555", lineHeight: 1.7, mt: 1 }}>
+                {parentProfile.description}
+              </Typography>
+            </Box>
+
+            {/* Trait bars */}
+            <TraitBars
+              scores={parentAgg.normalized}
+              meta={PARENT_TRAIT_META}
+              questionsAnswered={parentAgg.questions}
+            />
+          </Box>
+        )}
 
         {/* ── PLAYER CARDS ── */}
         <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: "#1B7B7E" }}>
@@ -183,8 +155,10 @@ export default function SummaryPage() {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 4 }}>
           {orderedPlayers.map((player, i) => {
             const char = CHARACTERS.find((c) => c.id === player.characterId);
-            const playerTraits = Object.entries(player.stats.traitPoints) as [keyof TraitPoints, number][];
-            const topTrait = playerTraits.sort((a, b) => b[1] - a[1])[0];
+            const norm = normalizeScores(player.stats.traitPoints, player.stats.questionsAnswered);
+            const traitEntries = Object.entries(norm) as [keyof TraitPoints, number][];
+            const topTrait = traitEntries.sort((a, b) => b[1] - a[1])[0];
+            const meta = player.role === "child" ? CHILD_TRAIT_META : PARENT_TRAIT_META;
             return (
               <Card key={player.id} component={motion.div} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 + i * 0.1 }}>
                 <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
@@ -199,14 +173,13 @@ export default function SummaryPage() {
                       </Typography>
                       {topTrait && topTrait[1] > 0 && (
                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
-                          <Typography variant="caption">{TRAIT_META[topTrait[0]].icon}</Typography>
-                          <Typography variant="caption" fontWeight={600} sx={{ color: TRAIT_META[topTrait[0]].color }}>
-                            เด่นด้าน: {TRAIT_META[topTrait[0]].label}
+                          <Typography variant="caption">{meta[topTrait[0]].icon}</Typography>
+                          <Typography variant="caption" fontWeight={600} sx={{ color: meta[topTrait[0]].color }}>
+                            เด่นด้าน: {meta[topTrait[0]].label}
                           </Typography>
                         </Box>
                       )}
                     </Box>
-                    <FavoriteIcon sx={{ color: char?.baseColor + "66", fontSize: 20 }} />
                   </Box>
                 </CardContent>
               </Card>
@@ -229,5 +202,75 @@ export default function SummaryPage() {
         </Box>
       </Container>
     </PageTransition>
+  );
+}
+
+// ─── Trait Bars Sub-component ──────────────────────────────────────────────────
+
+function TraitBars({
+  scores,
+  meta,
+  questionsAnswered,
+}: {
+  scores: TraitPoints;
+  meta: Record<keyof TraitPoints, { label: string; icon: string; color: string }>;
+  questionsAnswered: number;
+}) {
+  const entries = Object.entries(scores) as [keyof TraitPoints, number][];
+
+  return (
+    <Card sx={{ borderRadius: 4 }}>
+      <CardContent sx={{ p: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+          <Typography variant="subtitle1" fontWeight={600} sx={{ color: "#1B7B7E" }}>
+            ✨ คะแนนรายมิติ (เต็ม 12)
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            ตอบ {questionsAnswered} ข้อ
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {entries.map(([key, value]) => {
+            const m = meta[key];
+            const level = scoreLevel(value);
+            return (
+              <Box key={key}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                    <Typography>{m.icon}</Typography>
+                    <Typography variant="body2" fontWeight={600}>{m.label}</Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography variant="body2" fontWeight={700} sx={{ color: m.color }}>
+                      {value}/12
+                    </Typography>
+                    <Typography variant="caption" fontWeight={600}
+                      sx={{
+                        color: scoreLevelColor(level),
+                        backgroundColor: scoreLevelColor(level) + "18",
+                        px: 1, py: 0.2, borderRadius: 2,
+                      }}>
+                      {scoreLevelLabel(level)}
+                    </Typography>
+                  </Box>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={Math.round((value / 12) * 100)}
+                  sx={{
+                    height: 10, borderRadius: 5,
+                    backgroundColor: m.color + "18",
+                    "& .MuiLinearProgress-bar": {
+                      background: `linear-gradient(90deg, ${m.color}88, ${m.color})`,
+                      borderRadius: 5,
+                    },
+                  }}
+                />
+              </Box>
+            );
+          })}
+        </Box>
+      </CardContent>
+    </Card>
   );
 }
