@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import {
-  Box, Typography, Button, Container, TextField,
+  Box, Typography, Button, Container,
   Dialog, DialogTitle, DialogContent, DialogActions, Chip,
 } from "@mui/material";
 import Image from "next/image";
@@ -35,11 +35,12 @@ export default function PlayPage() {
   } = useGame();
 
   const [playState, setPlayState] = useState<PlayState>("turn");
-  const [questionCode, setQuestionCode] = useState("");
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerKey, setTimerKey] = useState(0);
+  const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
+  const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
   const [inputError, setInputError] = useState("");
   const [confirmFinish, setConfirmFinish] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -51,8 +52,8 @@ export default function PlayPage() {
   const char = CHARACTERS.find((c) => c.id === currentPlayer?.characterId);
 
   const handleCodeSubmit = () => {
-    const code = questionCode.trim().toUpperCase();
-    if (!code) { setInputError("กรุณาใส่รหัสคำถาม"); return; }
+    if (!selectedLetter || selectedNumber === null) { setInputError("กรุณาเลือกรหัสให้ครบ"); return; }
+    const code = `${selectedLetter}${selectedNumber.toString().padStart(2, "0")}`;
     const question = getQuestionByCode(code);
     if (!question) { setInputError("ไม่พบรหัส " + code); return; }
     setCurrentQuestion(question);
@@ -89,7 +90,8 @@ export default function PlayPage() {
 
   const handleFinishTurn = () => {
     setPlayState("turn");
-    setQuestionCode("");
+    setSelectedLetter(null);
+    setSelectedNumber(null);
     setCurrentQuestion(null);
     setSelectedAnswer(null);
     nextTurn();
@@ -222,34 +224,118 @@ export default function PlayPage() {
             </motion.div>
           )}
 
-          {/* ─── QUESTION CODE INPUT ─── */}
+          {/* ─── CARD CODE CHIP SELECTOR ─── */}
           {playState === "input" && (
             <motion.div key="input" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -30 }} transition={{ duration: 0.3 }}>
-              <Box sx={{ backgroundColor: "white", borderRadius: 4, p: 4, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", textAlign: "center" }}>
-                {/* Small character */}
-                <Box sx={{ width: 80, height: 100, mx: "auto", mb: 2, position: "relative" }}>
+              <Box sx={{ backgroundColor: "white", borderRadius: 4, p: 3, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", textAlign: "center" }}>
+                {/* Character */}
+                <Box sx={{ width: 72, height: 90, mx: "auto", mb: 1.5, position: "relative" }}>
                   {char && <Image src={char.image} alt={char.name} fill style={{ objectFit: "contain" }} />}
                 </Box>
-                <Typography variant="h5" fontWeight={600} sx={{ mb: 1, color: "#1B7B7E" }}>ใส่รหัสคำถาม</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  ใส่รหัสจากการ์ดคำถาม
+                <Typography variant="h6" fontWeight={700} sx={{ mb: 0.5, color: "#1B7B7E" }}>เลือกรหัสการ์ด</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>เลือกตัวอักษร แล้วเลือกเลข</Typography>
+
+                {/* ── Step 1: Letter ── */}
+                <Typography variant="caption" fontWeight={700} sx={{ color: "#718096", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", mb: 1 }}>
+                  ขั้นที่ 1 — ประเภทการ์ด
                 </Typography>
-                {(() => { const codes = getAllQuestionCodes(); return (
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: "block", textAlign: "center" }}>
-                    รหัสที่ใช้ได้: {codes[0]} – {codes[codes.length - 1]}
-                  </Typography>
-                ); })()}
-                <TextField
-                  fullWidth placeholder={`เช่น ${getAllQuestionCodes()[0]}`}
-                  value={questionCode}
-                  onChange={(e) => { setQuestionCode(e.target.value); setInputError(""); }}
-                  onKeyDown={(e) => e.key === "Enter" && handleCodeSubmit()}
-                  error={!!inputError} helperText={inputError}
-                  sx={{ mb: 3, "& input": { textAlign: "center", fontSize: "1.5rem", fontWeight: 600, letterSpacing: "0.1em" } }}
-                />
-                <Box sx={{ display: "flex", gap: 2 }}>
-                  <Button variant="outlined" onClick={() => setPlayState("turn")} sx={{ flex: 1, py: 1.5 }}>ยกเลิก</Button>
-                  <Button variant="contained" color="primary" onClick={handleCodeSubmit} sx={{ flex: 2, py: 1.5, fontSize: "1.1rem" }}>ยืนยัน</Button>
+                <Box sx={{ display: "flex", gap: 1.5, justifyContent: "center", mb: 3 }}>
+                  {[
+                    { letter: "P", label: "ผู้ปกครอง", color: "#1B7B7E", bg: "#E0F4F4", imgId: "grandpa" }, // A
+                    { letter: "L", label: "ลูก",        color: "#7B68EE", bg: "#EEF0FF", imgId: "mom" }, // D
+                    { letter: "U", label: "ทั่วไป",    color: "#E8A030", bg: "#FFF3DC", imgId: "daughter" }, // C
+                  ].map(({ letter, label, color, bg, imgId }) => {
+                    const active = selectedLetter === letter;
+                    const charData = CHARACTERS.find((c) => c.id === imgId);
+                    
+                    return (
+                      <Box
+                        key={letter}
+                        component={motion.div}
+                        whileHover={{ scale: 1.06 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => { setSelectedLetter(letter); setSelectedNumber(null); setInputError(""); }}
+                        sx={{
+                          flex: 1, py: 1.5, borderRadius: 3, cursor: "pointer",
+                          backgroundColor: active ? color : bg,
+                          border: `2px solid ${active ? color : "transparent"}`,
+                          boxShadow: active ? `0 4px 14px ${color}44` : "none",
+                          transition: "all 0.2s",
+                          display: "flex", flexDirection: "column", alignItems: "center"
+                        }}
+                      >
+                        <Box sx={{ width: 44, height: 56, position: "relative", mb: 0.5 }}>
+                          {charData && <Image src={charData.image} alt={label} fill style={{ objectFit: "contain" }} />}
+                        </Box>
+                        <Typography fontWeight={700} sx={{ color: active ? "white" : color, fontSize: "1.1rem", mt: 0.25 }}>{letter}</Typography>
+                        <Typography sx={{ color: active ? "rgba(255,255,255,0.85)" : "#555", fontSize: "0.7rem", fontWeight: 500 }}>{label}</Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+
+                {/* ── Step 2: Number ── */}
+                {selectedLetter && (
+                  <Box component={motion.div} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <Typography variant="caption" fontWeight={700} sx={{ color: "#718096", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", mb: 1.5 }}>
+                      ขั้นที่ 2 — หมายเลขการ์ด
+                    </Typography>
+                    <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1, mb: 2.5 }}>
+                      {Array.from({ length: 16 }, (_, i) => i).map((n) => {
+                        const active = selectedNumber === n;
+                        const letterColor = selectedLetter === "P" ? "#1B7B7E" : selectedLetter === "L" ? "#7B68EE" : "#E8A030";
+                        return (
+                          <Box
+                            key={n}
+                            component={motion.div}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => { setSelectedNumber(n); setInputError(""); }}
+                            sx={{
+                              py: 1.25, borderRadius: 2.5, cursor: "pointer",
+                              backgroundColor: active ? letterColor : `${letterColor}14`,
+                              border: `2px solid ${active ? letterColor : "transparent"}`,
+                              boxShadow: active ? `0 3px 10px ${letterColor}44` : "none",
+                              transition: "all 0.15s",
+                            }}
+                          >
+                            <Typography fontWeight={700} sx={{ color: active ? "white" : letterColor, fontSize: "0.95rem" }}>
+                              {n.toString().padStart(2, "0")}
+                            </Typography>
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  </Box>
+                )}
+
+                {/* ── Preview ── */}
+                {selectedLetter && selectedNumber !== null && (
+                  <Box component={motion.div} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                    sx={{ display: "inline-flex", alignItems: "center", gap: 1, px: 2.5, py: 1,
+                      borderRadius: 3, mb: 2,
+                      background: "linear-gradient(135deg, #1B7B7E18, #5BB8A818)",
+                      border: "1.5px solid #1B7B7E44",
+                    }}
+                  >
+                    <Typography sx={{ fontSize: "1rem" }}>🃏</Typography>
+                    <Typography fontWeight={700} sx={{ color: "#1B7B7E", fontSize: "1.1rem", letterSpacing: "0.08em" }}>
+                      {selectedLetter}{selectedNumber.toString().padStart(2, "0")}
+                    </Typography>
+                  </Box>
+                )}
+
+                {inputError && (
+                  <Typography variant="caption" sx={{ color: "#F44336", display: "block", mb: 1.5 }}>{inputError}</Typography>
+                )}
+
+                {/* ── Actions ── */}
+                <Box sx={{ display: "flex", gap: 2, mt: 1 }}>
+                  <Button variant="outlined" onClick={() => { setPlayState("turn"); setSelectedLetter(null); setSelectedNumber(null); setInputError(""); }}
+                    sx={{ flex: 1, py: 1.5, borderRadius: 3 }}>ยกเลิก</Button>
+                  <Button variant="contained" color="primary" onClick={handleCodeSubmit}
+                    disabled={!selectedLetter || selectedNumber === null}
+                    sx={{ flex: 2, py: 1.5, borderRadius: 3, fontSize: "1rem", fontWeight: 700, color: "white" }}>ยืนยัน</Button>
                 </Box>
               </Box>
             </motion.div>
