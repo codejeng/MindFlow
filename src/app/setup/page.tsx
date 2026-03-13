@@ -13,6 +13,7 @@ import type { PlayerRole } from "@/context/GameContext";
 import PageTransition from "@/components/common/PageTransition";
 import PersonAddAltRoundedIcon from "@mui/icons-material/PersonAddAltRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import PersonIcon from "@mui/icons-material/Person";
 import ChildCareIcon from "@mui/icons-material/ChildCare";
 import CloseIcon from "@mui/icons-material/Close";
@@ -50,6 +51,21 @@ export default function SetupPage() {
   return (
     <PageTransition>
       <Container maxWidth="sm" sx={{ py: 4, minHeight: "100vh" }}>
+        {/* Back button */}
+        <Box sx={{ mb: 1 }}>
+          <Button
+            onClick={() => router.back()}
+            startIcon={<ArrowBackRoundedIcon />}
+            sx={{
+              color: "#1B7B7E", textTransform: "none", fontWeight: 500,
+              borderRadius: 3, px: 1.5, py: 0.75,
+              "&:hover": { backgroundColor: "#1B7B7E18" },
+            }}
+          >
+            ย้อนกลับ
+          </Button>
+        </Box>
+
         {/* Header */}
         <Box sx={{ textAlign: "center", mb: 4 }}>
           <Typography variant="h4" fontWeight={600} sx={{ color: "#1B7B7E", mb: 1 }}>
