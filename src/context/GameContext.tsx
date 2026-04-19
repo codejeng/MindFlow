@@ -23,7 +23,7 @@ export const CHARACTERS: CharacterDef[] = [
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type PlayerRole = "parent" | "child";
-export type AgeGroup = "ต้น" | "ปลาย" | "ทั่วไป";
+export type AgeGroup = "ประถม" | "ม.ต้น" | "ม.ปลาย" | "ทั่วไป";
 
 export interface TraitPoints {
   SE: number;   // Self-Efficacy

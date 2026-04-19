@@ -23,7 +23,7 @@ export default function SetupPage() {
   const { players, addPlayer, removePlayer, setTurnOrder, setGamePhase, timeLimit, setTimeLimit } = useGame();
   const [name, setName] = useState("");
   const [role, setRole] = useState<PlayerRole>("parent");
-  const [ageGroup, setAgeGroup] = useState<AgeGroup>("ต้น");
+  const [ageGroup, setAgeGroup] = useState<AgeGroup>("ประถม");
   const [selectedChar, setSelectedChar] = useState(CHARACTERS[0].id);
   const [error, setError] = useState("");
 
@@ -151,10 +151,13 @@ export default function SetupPage() {
             onChange={(_, val) => val && setAgeGroup(val)}
             fullWidth sx={{ mb: 3 }}
           >
-            <ToggleButton value="ต้น" sx={{ borderRadius: "12px !important", mr: 1, fontWeight: 500 }}>
+            <ToggleButton value="ประถม" sx={{ borderRadius: "12px !important", mr: 1, fontWeight: 500 }}>
+              ประถม
+            </ToggleButton>
+            <ToggleButton value="ม.ต้น" sx={{ borderRadius: "12px !important", mr: 1, fontWeight: 500 }}>
               ม.ต้น
             </ToggleButton>
-            <ToggleButton value="ปลาย" sx={{ borderRadius: "12px !important", mr: 1, fontWeight: 500 }}>
+            <ToggleButton value="ม.ปลาย" sx={{ borderRadius: "12px !important", mr: 1, fontWeight: 500 }}>
               ม.ปลาย
             </ToggleButton>
             <ToggleButton value="ทั่วไป" sx={{ borderRadius: "12px !important", fontWeight: 500 }}>

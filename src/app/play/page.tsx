@@ -53,22 +53,38 @@ export default function PlayPage() {
   // Calculate prefix based on player's ageGroup and role
   const getCardPrefix = () => {
     if (!currentPlayer) return "U";
+    const groupMap: Record<string, string> = {
+      "ประถม": "P",
+      "ม.ต้น": "M",
+      "ม.ปลาย": "L",
+      "ทั่วไป": "U"
+    };
+    const prefix = groupMap[currentPlayer.ageGroup] || "U";
+    
     if (currentPlayer.role === "child") {
-      if (currentPlayer.ageGroup === "ต้น") return "P";
-      if (currentPlayer.ageGroup === "ปลาย") return "L";
-      return "U";
+      return prefix;
     } else {
-      if (currentPlayer.ageGroup === "ต้น") return "PP";
-      if (currentPlayer.ageGroup === "ปลาย") return "LL";
-      return "UU";
+      return `${prefix}${prefix}`; // PP, MM, LL, UU
     }
   };
   const cardPrefix = getCardPrefix();
 
   const handleCodeSubmit = () => {
     if (!selectedNumberStr) { setInputError("กรุณาใส่หมายเลขการ์ด"); return; }
-    const code = `${cardPrefix}${selectedNumberStr.padStart(2, "0")}`;
-    const question = getQuestionByCode(code);
+    const inputCode = selectedNumberStr.padStart(2, "0");
+    let code = `${cardPrefix}${inputCode}`;
+    let question = getQuestionByCode(code);
+
+    // FALLBACK: If parent card (e.g. PP05) not found, try child card (P05)
+    if (!question && cardPrefix.length > 1) {
+      const childPrefix = cardPrefix.charAt(0);
+      const fallbackCode = `${childPrefix}${inputCode}`;
+      question = getQuestionByCode(fallbackCode);
+      if (question) {
+        console.log(`Fallback to child card: ${fallbackCode}`);
+      }
+    }
+
     if (!question) { setInputError("ไม่พบรหัส " + code); return; }
     setCurrentQuestion(question);
     setSelectedAnswer(null);
@@ -521,7 +537,7 @@ export default function PlayPage() {
         <Dialog
           open={showShareModal}
           onClose={() => setShowShareModal(false)}
-          PaperProps={{ sx: { borderRadius: 2, p: 0, overflow: "hidden", maxWidth: 400 } }}
+          PaperProps={{ sx: { borderRadius: 4, p: 0, overflow: "hidden", maxWidth: 400 } }}
         >
           <Box sx={{
             textAlign: "center", p: 4,
@@ -531,8 +547,28 @@ export default function PlayPage() {
             <Typography variant="h6" fontWeight={700} sx={{ color: "#2E7D32", mb: 1 }}>
               แชร์คำตอบของคุณ
             </Typography>
-            <Typography variant="body1" sx={{ color: "#33691E", lineHeight: 1.8, mb: 2.5, fontWeight: 500 }}>
-              กรุณาเลือกแชร์คำถามและคำตอบ<br />กับผู้เล่น 1 คน
+
+            {/* Selected Answer Display */}
+            {currentQuestion && selectedAnswer !== null && (
+              <Box sx={{
+                my: 2.5, p: 2,
+                backgroundColor: "rgba(255, 255, 255, 0.7)",
+                borderRadius: 3,
+                border: "2px solid #A5D6A7",
+                boxShadow: "0 4px 10px rgba(0,0,0,0.03)",
+                backdropFilter: "blur(4px)"
+              }}>
+                <Typography variant="caption" sx={{ color: "#2E7D32", fontWeight: 700, display: "block", mb: 0.5, opacity: 0.8, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                  คำตอบที่คุณเลือก
+                </Typography>
+                <Typography variant="body1" fontWeight={600} sx={{ color: "#1B5E20" }}>
+                  {currentQuestion.choices[selectedAnswer].text}
+                </Typography>
+              </Box>
+            )}
+
+            <Typography variant="body1" sx={{ color: "#33691E", lineHeight: 1.6, mb: 3, fontWeight: 500 }}>
+              แชร์คำตอบนี้กับผู้เล่นคนอื่น ๆ
             </Typography>
             <Box sx={{ display: "flex", gap: 2 }}>
               <Button fullWidth variant="outlined" onClick={() => setShowShareModal(false)}
@@ -569,9 +605,17 @@ export default function PlayPage() {
             <Typography variant="body1" sx={{ color: "#5D4037", lineHeight: 1.8, mb: 1, fontWeight: 500 }}>
               ข้ามการแชร์เหตุผลและจบเทิร์นทันที
             </Typography>
-            <Typography variant="body2" sx={{ color: "#8D6E63", mb: 2.5 }}>
-              คุณมี Pass Token เหลือ {currentPlayer?.stats.passTokens ?? 0} ชิ้น
-            </Typography>
+            <Box sx={{
+              backgroundColor: "white",
+              borderRadius: 2,
+              p: 1.5,
+              mb: 2.5,
+              border: "1px dashed #E8A030"
+            }}>
+              <Typography variant="body2" sx={{ color: "#8D6E63", fontWeight: 500 }}>
+                หากมี Pass Token เหลือ สามารถใช้ 2 เหรียญเพื่อข้ามการแชร์เหตุผลได้
+              </Typography>
+            </Box>
             <Box sx={{ display: "flex", gap: 2 }}>
               <Button fullWidth variant="outlined" onClick={() => setShowPassTokenModal(false)}
                 sx={{ py: 1.5, borderRadius: 3, borderColor: "#BDBDBD", color: "#757575", fontWeight: 600 }}>
