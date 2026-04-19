@@ -12,6 +12,7 @@ import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import MedicalServicesOutlinedIcon from "@mui/icons-material/MedicalServicesOutlined";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
+import FeedbackFAB from "@/components/common/FeedbackFAB";
 
 const FEATURES = [
   {
@@ -701,6 +702,7 @@ export default function Home() {
           </Box>
         </Box>
       </Container>
+      <FeedbackFAB />
     </Box>
   );
 }

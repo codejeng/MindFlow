@@ -10,7 +10,7 @@ import {
 import {
   LayoutDashboard, Users, History, Lightbulb,
   AlertCircle, BrainCircuit, FileText, Settings,
-  LogOut, Bell, Search, Menu as MenuIcon, ChevronLeft
+  LogOut, Bell, Search, Menu as MenuIcon, ChevronLeft, MessageSquareHeart
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -32,6 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "AI Insights", href: "/admin/insights", icon: Lightbulb, badge: 3 },
   { label: "Risk Monitor", href: "/admin/risk", icon: AlertCircle, badge: 24 },
   { label: "Game Intelligence", href: "/admin/game-intel", icon: BrainCircuit },
+  { label: "User Feedback", href: "/admin/feedback", icon: MessageSquareHeart },
   { label: "Reports", href: "/admin/reports", icon: FileText },
 ];
 
